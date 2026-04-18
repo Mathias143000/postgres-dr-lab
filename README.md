@@ -9,6 +9,19 @@ The point of this repository is not to look like a huge platform. The point is t
 - restore from a clean environment
 - verify that the recovered dataset matches the baseline
 
+## Portfolio Role
+
+This is the reliability and recovery flagship in the portfolio.
+
+Use this repository when the discussion is about:
+
+- recovery readiness instead of only deployment readiness
+- explicit `RPO` / `RTO` assumptions
+- repeatable restore drills
+- evidence that recovery was actually executed, not only described
+
+This repo is intentionally narrow. Its job is not to be a general platform demo, but to prove that backup and restore thinking is treated as a first-class engineering concern.
+
 ## What This Repo Demonstrates
 
 - `PostgreSQL` runtime in containers
@@ -37,6 +50,16 @@ PostgreSQL primary ---> pgBackRest repo volume
 Clean restore workflow:
 stop primary -> wipe data volume -> pgbackrest restore -> start primary -> verify state
 ```
+
+## Review Path
+
+For a fast technical review, the best order is:
+
+1. this README for drill scope and assumptions
+2. [docs/architecture.md](./docs/architecture.md) for the recovery shape
+3. [docs/runbook.md](./docs/runbook.md) for the operator sequence
+4. `scripts/run-drill.sh` for the end-to-end flow
+5. `scripts/restore.sh` and `scripts/verify-restore.sh` for the actual recovery proof
 
 ## Fixed Stack
 
