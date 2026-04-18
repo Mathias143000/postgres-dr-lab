@@ -1,0 +1,5 @@
+.env
+artifacts/*
+!artifacts/.gitkeep
+*.log
+todo.md
