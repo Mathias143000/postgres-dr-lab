@@ -16,6 +16,18 @@ bash scripts/backup.sh
 
 This writes backup metadata into `artifacts/backups/`.
 
+The backup script also writes freshness evidence:
+
+```bash
+bash scripts/report-freshness.sh
+```
+
+By default, the latest backup must be no older than 24 hours. Override the policy for stricter rehearsals:
+
+```bash
+BACKUP_FRESHNESS_MAX_HOURS=4 bash scripts/report-freshness.sh
+```
+
 ## 3. Simulate damage
 
 ```bash
@@ -46,6 +58,8 @@ bash scripts/verify-restore.sh
 
 The verification step compares the restored dataset with the baseline snapshot captured during seeding.
 
+After a successful full drill, the lab writes a postmortem-style summary to `artifacts/drills/latest/postmortem.md`.
+
 ## 6. Run the full drill
 
 ```bash
@@ -53,6 +67,14 @@ bash scripts/run-drill.sh
 ```
 
 Artifacts land in `artifacts/drills/latest/`.
+
+The most useful review artifacts are:
+
+- `backup-info.json`
+- `backup-freshness.txt`
+- `drill-metrics.env`
+- `restored.tsv`
+- `postmortem.md`
 
 ## Failure modes in scope
 

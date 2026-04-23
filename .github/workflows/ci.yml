@@ -1,0 +1,38 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  postgres-dr-lab:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Shell syntax
+        run: bash -n scripts/*.sh
+
+      - name: Compose config
+        run: |
+          cp .env.example .env
+          docker compose config --quiet
+
+      - name: Full recovery drill
+        run: bash scripts/run-drill.sh
+
+      - name: Upload drill evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: postgres-dr-drill-evidence
+          path: artifacts/
+          if-no-files-found: ignore
+
+      - name: Compose down
+        if: always()
+        run: docker compose down -v --remove-orphans

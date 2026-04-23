@@ -6,7 +6,10 @@ ENV_FILE="$ROOT_DIR/.env"
 ARTIFACTS_DIR="$ROOT_DIR/artifacts"
 BASELINE_FILE="$ARTIFACTS_DIR/baseline.tsv"
 BACKUP_INFO_FILE="$ARTIFACTS_DIR/backups/backup-info.json"
+FRESHNESS_REPORT_FILE="$ARTIFACTS_DIR/backups/freshness-report.json"
 DRILL_DIR="$ARTIFACTS_DIR/drills/latest"
+DRILL_METRICS_FILE="$DRILL_DIR/drill-metrics.env"
+DRILL_POSTMORTEM_FILE="$DRILL_DIR/postmortem.md"
 COMPOSE_PROJECT_NAME="postgres-dr-lab"
 DATA_VOLUME="${COMPOSE_PROJECT_NAME}_postgres-data"
 REPO_VOLUME="${COMPOSE_PROJECT_NAME}_pgbackrest-repo"
@@ -54,6 +57,17 @@ psql_exec() {
 pgbackrest_exec() {
   ensure_env
   compose exec -T -u postgres postgres pgbackrest --stanza="$PGBACKREST_STANZA" "$@"
+}
+
+python_exec() {
+  if command -v python3 >/dev/null 2>&1; then
+    python3 "$@"
+  elif command -v python >/dev/null 2>&1; then
+    python "$@"
+  else
+    echo "Python is required for evidence report generation." >&2
+    return 1
+  fi
 }
 
 capture_state_query() {
