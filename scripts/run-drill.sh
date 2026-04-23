@@ -16,12 +16,12 @@ DRILL_START_EPOCH="$(date -u +%s)"
 } > "$DRILL_METRICS_FILE"
 
 log "Running full disaster recovery drill."
-"$ROOT_DIR/scripts/stack-up.sh"
-"$ROOT_DIR/scripts/seed-demo.sh"
-"$ROOT_DIR/scripts/backup.sh"
-"$ROOT_DIR/scripts/simulate-failure.sh" drop-tickets
-"$ROOT_DIR/scripts/restore.sh"
-"$ROOT_DIR/scripts/verify-restore.sh"
+bash "$ROOT_DIR/scripts/stack-up.sh"
+bash "$ROOT_DIR/scripts/seed-demo.sh"
+bash "$ROOT_DIR/scripts/backup.sh"
+bash "$ROOT_DIR/scripts/simulate-failure.sh" drop-tickets
+bash "$ROOT_DIR/scripts/restore.sh"
+bash "$ROOT_DIR/scripts/verify-restore.sh"
 
 DRILL_END_EPOCH="$(date -u +%s)"
 {
@@ -31,6 +31,6 @@ DRILL_END_EPOCH="$(date -u +%s)"
 } >> "$DRILL_METRICS_FILE"
 
 compose ps > "$DRILL_DIR/compose-ps.txt"
-"$ROOT_DIR/scripts/write-postmortem.sh" passed
+bash "$ROOT_DIR/scripts/write-postmortem.sh" passed
 
 log "Full drill completed successfully. Evidence lives in $DRILL_DIR."
