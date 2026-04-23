@@ -60,14 +60,17 @@ pgbackrest_exec() {
 }
 
 python_exec() {
-  if command -v python3 >/dev/null 2>&1; then
-    python3 "$@"
-  elif command -v python >/dev/null 2>&1; then
-    python "$@"
-  else
-    echo "Python is required for evidence report generation." >&2
-    return 1
-  fi
+  local candidate
+
+  for candidate in python3 python py; do
+    if command -v "$candidate" >/dev/null 2>&1 && "$candidate" -c "import sys" >/dev/null 2>&1; then
+      "$candidate" "$@"
+      return $?
+    fi
+  done
+
+  echo "Python is required for evidence report generation." >&2
+  return 1
 }
 
 capture_state_query() {
