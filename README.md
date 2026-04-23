@@ -213,9 +213,11 @@ This repo is considered ready for portfolio use when it has:
 - backup freshness is checked from `pgBackRest` metadata, not exported as a live metric yet
 - no TLS or secret manager because this lab is focused on DR mechanics
 
-## Future Improvements
+## Explicit Non-Goals
 
 - scheduled restore validation
 - PITR walkthrough
 - Prometheus-style backup freshness exporter
 - offsite repository target
+
+These are intentionally outside this local DR lab. The current DoD is the reproducible destructive restore drill with explicit RPO/RTO assumptions and evidence.
