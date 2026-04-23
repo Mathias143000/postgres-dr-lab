@@ -37,6 +37,21 @@
                   | - restart PostgreSQL     |
                   | - verify restored state  |
                   +--------------------------+
+                               |
+                               v
+                  +--------------------------+
+                  | Drill artifacts          |
+                  | - freshness-report.json  |
+                  | - drill-metrics.env      |
+                  | - 02-failure.txt         |
+                  +------------+-------------+
+                               |
+                               v
+                  +--------------------------+
+                  | Go drill exporter        |
+                  | - reads local evidence   |
+                  | - exposes /metrics       |
+                  +--------------------------+
 ```
 
 The lab keeps the topology intentionally small so the recovery story is easy to explain:
@@ -45,3 +60,4 @@ The lab keeps the topology intentionally small so the recovery story is easy to 
 - one repository volume for `pgBackRest`
 - one deterministic seed dataset
 - one scripted recovery drill that can be replayed on demand
+- one small Go exporter that turns drill evidence into scrapeable signals

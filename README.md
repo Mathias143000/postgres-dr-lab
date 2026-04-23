@@ -29,8 +29,10 @@ This repo is intentionally narrow. Its job is not to be a general platform demo,
 - WAL archiving enabled on the primary database
 - scripted recovery drill with logs and evidence
 - backup freshness report after each full backup
+- Go drill exporter that turns DR artifacts into scrapeable metrics
 - postmortem-style drill summary with RPO/RTO signals
 - CI path for shell syntax, Compose config, and the full recovery drill
+- CI path for `go test ./...` and `go vet ./...` on the exporter
 - explicit `RPO` and `RTO` assumptions
 - runbook-oriented documentation instead of only setup notes
 
@@ -50,6 +52,8 @@ PostgreSQL primary ---> pgBackRest repo volume
     | archive-push           | backup metadata + WAL
     +------------------------+
 
+artifacts/ ---> Go drill exporter ---> /metrics
+
 Clean restore workflow:
 stop primary -> wipe data volume -> pgbackrest restore -> start primary -> verify state
 ```
@@ -62,13 +66,15 @@ For a fast technical review, the best order is:
 2. [docs/architecture.md](./docs/architecture.md) for the recovery shape
 3. [docs/runbook.md](./docs/runbook.md) for the operator sequence
 4. [docs/hardening.md](./docs/hardening.md) for backup freshness and postmortem evidence
-5. `scripts/run-drill.sh` for the end-to-end flow
-6. `scripts/restore.sh` and `scripts/verify-restore.sh` for the actual recovery proof
+5. `cmd/drill-exporter/main.go` and `internal/exporter/exporter.go` for the observability slice
+6. `scripts/run-drill.sh` for the end-to-end flow
+7. `scripts/restore.sh` and `scripts/verify-restore.sh` for the actual recovery proof
 
 ## Fixed Stack
 
 - `PostgreSQL 16`
 - `pgBackRest`
+- `Go 1.23` for the drill exporter
 - local lab via `docker compose`
 
 ## Local Endpoints
@@ -76,6 +82,7 @@ For a fast technical review, the best order is:
 | Component | URL |
 | --- | --- |
 | PostgreSQL primary | `localhost:15432` |
+| Drill exporter | `127.0.0.1:9108/metrics` |
 
 Default credentials come from [`.env.example`](./.env.example):
 
@@ -112,6 +119,38 @@ This executes:
 
 Evidence lands in `artifacts/drills/latest/`.
 
+## Go Drill Exporter
+
+The exporter is a small supporting slice for the DR story. It does not replace the scripts or the runbook.
+It reads the artifacts that the lab already produces and exposes them as Prometheus-style metrics.
+
+Artifact contract:
+
+- `artifacts/backups/freshness-report.json`
+- `artifacts/drills/latest/drill-metrics.env`
+- `artifacts/drills/latest/02-failure.txt`
+
+Exposed signals:
+
+- `postgres_dr_backup_is_fresh`
+- `postgres_dr_backup_age_seconds`
+- `postgres_dr_recovery_drill_duration_seconds`
+- `postgres_dr_recovery_drill_rto_objective_met`
+- `postgres_dr_recovery_drill_failure_mode_info`
+
+Local run:
+
+```bash
+bash scripts/run-exporter.sh
+curl http://127.0.0.1:9108/metrics
+```
+
+Validation:
+
+```bash
+bash scripts/validate-exporter.sh
+```
+
 ## Operator Scripts
 
 - [scripts/bootstrap.sh](./scripts/bootstrap.sh) prepares `.env`
@@ -125,6 +164,12 @@ Evidence lands in `artifacts/drills/latest/`.
 - [scripts/verify-restore.sh](./scripts/verify-restore.sh) compares the restored state with the baseline
 - [scripts/write-postmortem.sh](./scripts/write-postmortem.sh) writes the recovery drill postmortem artifact
 - [scripts/run-drill.sh](./scripts/run-drill.sh) runs the entire recovery scenario end-to-end
+- [scripts/run-exporter.sh](./scripts/run-exporter.sh) serves artifact-backed DR metrics locally
+- [scripts/validate-exporter.sh](./scripts/validate-exporter.sh) runs `go test ./...` and `go vet ./...` with local Go or Docker
+
+Go component:
+
+- `cmd/drill-exporter` exposes backup freshness and drill timing as Prometheus metrics
 
 ## Recovery Scope
 
@@ -174,6 +219,7 @@ bash scripts/report-freshness.sh
 bash scripts/simulate-failure.sh drop-tickets
 bash scripts/restore.sh
 bash scripts/verify-restore.sh
+bash scripts/run-exporter.sh
 ```
 
 ## Operational Evidence
@@ -193,6 +239,7 @@ After a successful drill you should have:
 - `artifacts/drills/latest/postmortem.md`
 
 This is the portfolio-friendly proof that the scenario was not only described, but actually executed.
+The Go exporter intentionally reads these same artifacts instead of introducing a second source of truth.
 
 ## Portfolio Visible Ready Checklist
 
@@ -210,14 +257,14 @@ This repo is considered ready for portfolio use when it has:
 - single-node lab only
 - no scheduler for automated restore drills yet
 - no remote backup repository
-- backup freshness is checked from `pgBackRest` metadata, not exported as a live metric yet
+- the exporter reads local drill artifacts after a run rather than probing PostgreSQL directly
 - no TLS or secret manager because this lab is focused on DR mechanics
 
 ## Explicit Non-Goals
 
 - scheduled restore validation
 - PITR walkthrough
-- Prometheus-style backup freshness exporter
+- a full Prometheus stack wired into this repo
 - offsite repository target
 
 These are intentionally outside this local DR lab. The current DoD is the reproducible destructive restore drill with explicit RPO/RTO assumptions and evidence.

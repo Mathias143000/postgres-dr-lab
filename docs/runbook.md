@@ -76,6 +76,31 @@ The most useful review artifacts are:
 - `restored.tsv`
 - `postmortem.md`
 
+## 7. Expose DR metrics
+
+Once the artifacts exist, start the Go exporter:
+
+```bash
+bash scripts/run-exporter.sh
+```
+
+Then open:
+
+- `http://127.0.0.1:9108/healthz`
+- `http://127.0.0.1:9108/metrics`
+
+The exporter reads:
+
+- `artifacts/backups/freshness-report.json`
+- `artifacts/drills/latest/drill-metrics.env`
+- `artifacts/drills/latest/02-failure.txt`
+
+Validation path for the exporter:
+
+```bash
+bash scripts/validate-exporter.sh
+```
+
 ## Failure modes in scope
 
 - accidental table drop
