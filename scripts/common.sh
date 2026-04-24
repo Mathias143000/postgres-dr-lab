@@ -54,6 +54,35 @@ psql_exec() {
   compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 "$@"
 }
 
+postgres_is_in_recovery() {
+  local recovery_state
+
+  recovery_state="$(psql_exec -At -c "SELECT pg_is_in_recovery();")"
+  [[ "$recovery_state" == "t" ]]
+}
+
+wait_for_writable_primary() {
+  for _ in $(seq 1 30); do
+    if ! postgres_is_in_recovery; then
+      return 0
+    fi
+    sleep 2
+  done
+
+  log "PostgreSQL stayed in recovery mode for too long."
+  return 1
+}
+
+ensure_writable_primary() {
+  if ! postgres_is_in_recovery; then
+    return 0
+  fi
+
+  log "PostgreSQL is in recovery mode; promoting it back to a writable primary."
+  psql_exec -At -c "SELECT pg_wal_replay_resume();" >/dev/null
+  wait_for_writable_primary
+}
+
 pgbackrest_exec() {
   ensure_env
   compose exec -T -u postgres postgres pgbackrest --stanza="$PGBACKREST_STANZA" "$@"

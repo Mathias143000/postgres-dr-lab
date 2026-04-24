@@ -113,7 +113,7 @@ This executes:
 3. full backup
 4. backup freshness report
 5. destructive failure simulation
-6. clean restore
+6. clean restore and promote the restored instance back to a writable primary
 7. verification against baseline snapshot
 8. postmortem-style drill summary
 

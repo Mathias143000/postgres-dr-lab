@@ -49,6 +49,7 @@ The script:
 3. recreates the data volume empty
 4. runs `pgbackrest restore`
 5. starts PostgreSQL again
+6. promotes the restored instance so the lab returns to a writable primary state
 
 ## 5. Verify recovery
 

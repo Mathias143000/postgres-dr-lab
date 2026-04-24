@@ -9,6 +9,7 @@ ensure_artifact_dirs
 log "Starting postgres-dr-lab."
 compose up -d --build
 wait_for_postgres
+ensure_writable_primary
 
 log "Ensuring pgBackRest stanza exists."
 for attempt in $(seq 1 5); do

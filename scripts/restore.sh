@@ -30,6 +30,8 @@ docker run --rm \
 log "Starting restored PostgreSQL."
 compose up -d postgres >/dev/null
 wait_for_postgres
+printf '[%s] promoting restored instance back to writable primary if needed\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" | tee -a "$RESTORE_LOG"
+ensure_writable_primary
 
 printf '[%s] restore container finished and postgres is healthy again\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" | tee -a "$RESTORE_LOG"
 log "Restore completed."
